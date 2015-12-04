@@ -1,0 +1,186 @@
+
+asm85,  version 1.0f
+(c) 2010, M. D. Wagh
+
+                    ;Tyler Burns
+                    ;ECE33
+                    ;Program 1
+                    ;this program will put numbers into bins based on given values
+                    ;then it will print the number of "small", "medium", and "large" numbers
+                    	ORG	100H
+                    BOOT	EQU 	0
+                    BDOS	EQU 	5
+                    CR	EQU 	0DH
+                    LF	EQU 	0AH
+                    RUNS	EQU	8		;number of runs
+0100   3E00         	MVI	A, 0
+0102   0608         	MVI	B, RUNS		;set counter
+0104   0E00         	MVI	C, 0
+0106   1600         	MVI	D, 0
+0108   1E00         	MVI	E, 0
+010A   2600         	MVI	H, 0
+010C   2E00         	MVI	L, 0
+010E   318102       	LXI	SP, sp0
+0111   0E09         	MVI	C, 9
+0113   11BC01       	LXI	D, MSG1
+0116   CD0500       	CALL	BDOS		;print welcome
+0119   CD3901       DO:	CALL	READ
+011C   FEA7         	CPI	167
+011E   DA2501       	JC	LOWER
+0121   24           	INR	H
+0122   C32B01       	JMP	FINISH
+                    	
+0125   FE42         LOWER:	CPI	66
+0127   DA2B01       	JC	FINISH
+012A   2C           	INR	L
+                    	
+012B   05           FINISH:	DCR	B
+012C   C21901       	JNZ	DO
+012F   3E08         	MVI	A, RUNS
+0131   94           	SUB	H
+0132   95           	SUB	L
+0133   CD7D01       	CALL	PRINT
+0136   C30000       	JMP	BOOT
+                    ;this method takes the input from the user
+                    ;and processes it into usable numbers
+                    ;registers destroyed: none
+0139   E5           READ:	PUSH	H		;preserve counters
+013A   C5           	PUSH	B		;preserve run counter
+013B   0E09         	MVI	C, 9
+013D   11F401       	LXI	D, MSG2
+0140   CD0500       	CALL	BDOS		;print prompt
+                    	
+0143   0E01         	MVI	C, 1
+0145   CD0500       	CALL	BDOS		;wait for user input
+0148   FE0D         	CPI	CR		;check if enter was pressed
+014A   CA7901       	JZ	DONE		;if so, jump to done
+014D   D630         	SUI	'0'		;remove ascii zero
+014F   67           	MOV	H, A
+                    	
+0150   CD0500       	CALL	BDOS		;receive next input
+0153   FE0D         	CPI	CR		;same as above
+0155   CA7901       	JZ	DONE
+0158   D630         	SUI	'0'
+015A   6F           	MOV	L, A		;multiply first digit by ten
+015B   7C           	MOV	A, H
+015C   8F           	ADC	A
+015D   47           	MOV	B, A
+015E   8F           	ADC	A
+015F   8F           	ADC	A
+0160   88           	ADC	B
+0161   85           	ADD	L		;add the second digit
+0162   67           	MOV	H, A
+                    	
+0163   CD0500       	CALL	BDOS		;same as above
+0166   FE0D         	CPI	CR
+0168   CA7901       	JZ	DONE
+016B   D630         	SUI	'0'
+016D   6F           	MOV	L, A		;multiply by ten
+016E   7C           	MOV	A, H
+016F   8F           	ADC	A
+0170   47           	MOV	B, A
+0171   8F           	ADC	A
+0172   8F           	ADC	A
+0173   88           	ADC	B
+0174   85           	ADD	L		;add third digit
+0175   67           	MOV	H, A
+0176   CD0500       	CALL	BDOS		;wait for user to press enter
+0179   7C           DONE:	MOV	A, H
+017A   C1           	POP	B		;pop preserved run counter
+017B   E1           	POP	H		;pop counters
+017C   C9           	RET
+                    ;prints the data in a readable format
+                    ;registers destroyed: none
+017D   0E09         PRINT:	MVI	C, 9
+017F   111802       	LXI	D, MSG3		;print first bin
+0182   CD0500       	CALL	BDOS
+0185   0E02         	MVI	C, 2 
+0187   C630         	ADI 	'0'
+0189   5F           	MOV	E, A		;move the ascii value number of small numbers to E
+018A   CD0500       	CALL	BDOS
+018D   0E09         	MVI	C, 9
+018F   114B02       	LXI	D, SPACE	;leave space for formatting
+0192   CD0500       	CALL	BDOS
+0195   112A02       	LXI	D, MSG4		;print second bin
+0198   CD0500       	CALL	BDOS
+019B   0E02         	MVI	C, 2
+019D   7D           	MOV	A, L 		;move second value to A
+019E   C630         	ADI 	'0'		;add ascii zero
+01A0   5F           	MOV	E, A		; move val to E for printing
+01A1   CD0500       	CALL	BDOS
+01A4   0E09         	MVI	C, 9
+01A6   114B02       	LXI	D, SPACE
+01A9   CD0500       	CALL	BDOS
+01AC   113B02       	LXI	D, MSG5		;print last bin
+01AF   CD0500       	CALL	BDOS
+01B2   0E02         	MVI	C, 2
+01B4   7C           	MOV	A, H		;move third value to A
+01B5   C630         	ADI 	'0'		;add ascii zero
+01B7   5F           	MOV	E, A		; move val to E for printing
+01B8   CD0500       	CALL	BDOS
+01BB   C9           	RET
+                    
+01BC   54686520     MSG1:	DB	'The Size Finder', LF, CR, 'Quickly sort numbers into three sizes!$'
+       53697A65  
+       2046696E  
+       6465720A  
+       0D517569  
+       636B6C79  
+       20736F72  
+       74206E75  
+       6D626572  
+       7320696E  
+       746F2074  
+       68726565  
+       2073697A  
+       65732124  
+01F4   0A0D5479     MSG2:	DB	LF, CR, 'Type a number between 0 and 255: $'
+       70652061  
+       206E756D  
+       62657220  
+       62657477  
+       65656E20  
+       3020616E  
+       64203235  
+       353A2024  
+0218   0A0D536D     MSG3:	DB	LF, CR, 'Small Numbers: $'
+       616C6C20  
+       4E756D62  
+       6572733A  
+       2024      
+022A   4D656469     MSG4:	DB	'Medium Numbers: $'
+       756D204E  
+       756D6265  
+       72733A20  
+       24        
+023B   4C617267     MSG5:	DB	'Large Numbers: $'
+       65204E75  
+       6D626572  
+       733A2024  
+024B   20202024     SPACE:	DB	'   $'
+                    	DS	50
+                    sp0	EQU	$
+                    
+                    END
+
+      Symbol Table
+bdos         0005 (5)
+boot         0000 (0)
+cr           000D (13)
+do           0119 (281)
+done         0179 (377)
+finish       012B (299)
+lf           000A (10)
+lower        0125 (293)
+msg1         01BC (444)
+msg2         01F4 (500)
+msg3         0218 (536)
+msg4         022A (554)
+msg5         023B (571)
+print        017D (381)
+read         0139 (313)
+runs         0008 (8)
+sp0          0281 (641)
+space        024B (587)
+
+The file prog1.asm has no syntax errors

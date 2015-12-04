@@ -1,0 +1,199 @@
+
+asm85,  version 1.0f
+(c) 2010, M. D. Wagh
+
+                    ;Tyler Burns
+                    ;ECE 33
+                    ;Program 3
+                    ;11/13/15
+                    ;This program will create a text 
+                    ;histogram of a string of numbers input by the user.
+                    		ORG		100H
+0100   319302       		LXI		SP, sp0
+                    BOOT		EQU		0
+                    BDOS		EQU		5
+                    CR		EQU		0DH
+                    LF		EQU		0AH
+0103   0E09         		MVI		C, 9
+0105   11C801       		LXI		D, MSG1
+0108   CD0500       		CALL		BDOS
+010B   3E00         		MVI		A, 0
+010D   214302       		LXI		H, BUFF; load buff pointer into <HL>
+0110   77           		MOV		M, A; put zero into buff
+0111   23           		INX		H; increment <HL>
+0112   77           		MOV		M, A; put zero into buff+1
+0113   23           		INX		H; increment <HL>
+0114   77           		MOV		M, A; put zero into buff+2
+0115   23           		INX		H; increment <HL>
+0116   77           		MOV		M, A; put zero into buff+3
+0117   23           		INX		H; increment <HL>
+0118   77           		MOV		M, A; put zero into buff+4
+0119   23           		INX		H; increment <HL>
+011A   77           		MOV		M, A; put zero into buff+5
+011B   23           		INX		H; increment <HL>
+011C   77           		MOV		M, A; put zero into buff+6
+011D   23           		INX		H; increment <HL>
+011E   77           		MOV		M, A; put zero into buff+7
+011F   23           		INX		H; increment <HL>
+0120   77           		MOV		M, A; put zero into buff+8
+0121   23           		INX		H; increment <HL>
+0122   77           		MOV		M, A; put zero into buff+9
+0123   214302       		LXI		H, BUFF
+0126   0E09         		MVI		C, 9
+0128   11E101       		LXI		D, MSG3
+012B   CD0500       		CALL		BDOS
+012E   CD3F01       		CALL		READ
+0131   CD7B01       		CALL		PRINT
+0134   0E09         		MVI		C, 9
+0136   110D02       		LXI		D, MSG5
+0139   CD0500       		CALL		BDOS
+013C   C30000       		JMP		BOOT
+                    		
+                    ;Name: READ
+                    ;Input: None
+                    ;Function: receives the user's input, 
+                    ;gets rid of bad characters,
+                    ;and increments memory locations
+                    ;Destroyed Registers: 
+                    ;Subroutines Used: 
+013F   C5           READ:		PUSH		B
+0140   D5           		PUSH		D
+0141   1600         		MVI		D, 0
+0143   214302       READY:		LXI		H, BUFF
+0146   0E01         		MVI		C, 1
+0148   CD0500       		CALL		BDOS
+014B   FE0D         		CPI		CR
+014D   CA7801       		JZ		DONE
+0150   FE30         		CPI		'0'
+0152   FA6401       		JM		DELETE
+0155   FE3A         		CPI		'9'+1
+0157   F26401       		JP		DELETE
+015A   D630         		SUI		'0'
+015C   5F           		MOV		E, A
+015D   19           		DAD		D
+015E   7E           		MOV		A, M
+015F   3C           		INR		A
+0160   77           		MOV		M, A
+0161   C34301       		JMP		READY
+0164   1E08         DELETE:		MVI		E, 08H
+0166   0E02         		MVI		C, 2
+0168   CD0500       		CALL		BDOS
+016B   1E20         		MVI		E, 20H
+016D   CD0500       		CALL		BDOS
+0170   1E08         		MVI		E, 08H
+0172   CD0500       		CALL		BDOS
+0175   C34301       		JMP		READY
+0178   D1           DONE:		POP		D
+0179   C1           		POP		B
+017A   C9           		RET
+                    		
+                    ;Name: PRINT
+                    ;Input: None
+                    ;Function: Prints the histogram
+                    ;Destroyed Registers:
+                    ;Subroutines Used: ONELINE
+017B   C5           PRINT:		PUSH		B
+017C   0E09         		MVI		C, 9
+017E   11FA01       		LXI		D, MSG4
+0181   CD0500       		CALL		BDOS
+0184   060A         		MVI		B, 10
+0186   214302       		LXI		H, BUFF
+0189   0E02         		MVI		C, 2
+018B   1E30         		MVI		E, '0'
+018D   7E           PRNTPT:		MOV		A, M
+018E   CD9901       		CALL		ONELINE
+0191   23           		INX		H
+0192   1C           		INR		E
+0193   05           		DCR		B
+0194   C28D01       		JNZ		PRNTPT	
+0197   C1           		POP		B
+0198   C9           		RET
+                    		
+                    ;Name: ONELINE
+                    ;Input: None
+                    ;Function: Prints a single line of the histogram
+                    ;Destroyed Registers:
+                    ;Subroutines Used: 
+0199   C5           ONELINE:	PUSH		B
+019A   D5           		PUSH		D
+019B   0E02         		MVI		C, 2
+019D   CD0500       		CALL		BDOS
+01A0   0E09         		MVI		C, 9
+01A2   110802       		LXI		D, COLON
+01A5   CD0500       		CALL		BDOS
+01A8   FE00         		CPI		0
+01AA   CAB901       		JZ		DONE2
+01AD   0E09         		MVI		C, 9
+01AF   110B02       		LXI		D, XS
+01B2   CD0500       AGAIN:		CALL		BDOS
+01B5   3D           		DCR		A
+01B6   C2B201       		JNZ		AGAIN
+01B9   0E02         DONE2:	MVI			C, 2
+01BB   1E0A         		MVI		E, LF
+01BD   CD0500       		CALL		BDOS
+01C0   1E0D         		MVI		E, CR
+01C2   CD0500       		CALL		BDOS
+01C5   D1           		POP		D
+01C6   C1           		POP		B
+01C7   C9           		RET
+                    
+01C8   54686520     MSG1:		DB		'The Digital Histogram$'
+       44696769  
+       74616C20  
+       48697374  
+       6F677261  
+       6D24      
+01DE   0A0D24       MSG2:		DB		LF, CR, '$'
+01E1   0A0D5479     MSG3:		DB		LF, CR, 'Type about 40 digits: $'
+       70652061  
+       626F7574  
+       20343020  
+       64696769  
+       74733A20  
+       24        
+01FA   0A0D4869     MSG4:		DB		LF, CR, 'Histogram', LF, CR, '$'
+       73746F67  
+       72616D0A  
+       0D24      
+0208   3A2024       COLON:		DB		': $'
+020B   5824         XS:		DB		'X$'
+020D   0A0D5468     MSG5:		DB		LF, CR, 'Thanks for using the histogram.$'
+       616E6B73  
+       20666F72  
+       20757369  
+       6E672074  
+       68652068  
+       6973746F  
+       6772616D  
+       2E24      
+                    		DS		20
+                    BUFF		EQU		$
+                    		DS		80
+                    sp0		EQU		$
+                    END
+
+      Symbol Table
+again        01B2 (434)
+bdos         0005 (5)
+boot         0000 (0)
+buff         0243 (579)
+colon        0208 (520)
+cr           000D (13)
+delete       0164 (356)
+done         0178 (376)
+done2        01B9 (441)
+lf           000A (10)
+msg1         01C8 (456)
+msg2         01DE (478)
+msg3         01E1 (481)
+msg4         01FA (506)
+msg5         020D (525)
+oneline      0199 (409)
+print        017B (379)
+prntpt       018D (397)
+read         013F (319)
+ready        0143 (323)
+sp0          0293 (659)
+xs           020B (523)
+
+The file prog3.asm has no syntax errors

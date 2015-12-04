@@ -1,0 +1,39 @@
+
+asm85,  version 1.0f
+(c) 2010, M. D. Wagh
+
+                    ;BDOS EQU 5
+                    ;Call BDOS; refers to a location in the operating system
+                             ; that can perform certain operations based on what is in register C
+                    
+                    ;Program takes 2 character input from user
+                    ;then prints in reverse order
+                    ORG 100H
+                    BDOS EQU 5
+                    BOOT EQU 0
+0100   312701       LXI SP, SP0
+0103   0E01         MVI C, 1; read keyboard ASCII key code --> A (automatically prints to screen as well)
+0105   CD0500       CALL BDOS
+0108   47           MOV B, A; B has first character
+0109   CD0500       CALL BDOS; A has second character
+010C   1E0A         MVI E, 0AH; line feed
+010E   0E02         MVI C, 2; point char in E register
+0110   CD0500       Call BDOS
+0113   1E0D         MVI E, 0DH; carriage return, beginning of line
+0115   CD0500       Call BDOS
+0118   5F           MOV E, A
+0119   CD0500       CALL BDOS
+011C   58           MOV E, B
+011D   CD0500       CALL BDOS
+0120   C30000       JMP BOOT
+                    DS 4
+                    SP0 EQU $
+                    END
+
+
+      Symbol Table
+bdos         0005 (5)
+boot         0000 (0)
+sp0          0127 (295)
+
+The file 9-30-15.asm has no syntax errors

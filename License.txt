@@ -1,0 +1,16 @@
+License Agreement.
+
+Asm85 Ver 1.0f
+Sim85 Ver 1.0e-L
+
+Asm85 and Sim85 are copyrighted and should not be used for any other 
+purposes or uses except those stated in the next paragraph.
+
+These software packages are only for the use of the students and 
+staff of Lehigh University.  By installing these on your machine,
+you agree to restrict their use only to the Lehigh community.
+
+Asm85 and Sim85 are supplied on "as is" basis and without any other 
+warranties express or implied.  By accepting this license you assume the
+resposibility of all the direct, indirect, consequential or
+incidental damage from the installation and use of these packages.

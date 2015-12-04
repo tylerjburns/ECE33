@@ -1,0 +1,113 @@
+
+asm85,  version 1.0f
+(c) 2010, M. D. Wagh
+
+                    ;Tyler Burns
+                    ;ECE 33
+                    ;Program 3
+                    ;11/13/15
+                    ;This program will create a text 
+                    ;histogram of a string of numbers input by the user.
+                    		ORG		100H
+0100   310303       		LXI		SP, sp0
+                    BOOT	EQU		0
+                    BDOS	EQU		5
+                    CR		EQU		0DH
+                    LF		EQU		0AH
+0103   0E09         		MVI		C, 9
+0105   11B701       		LXI		D, MSG1
+0108   CD0500       		CALL	BDOS
+010B   3E00         		MVI		A, 0
+010D   21B302       		LXI		H, BUFF; load buff pointer into <HL>
+0110   77           		MOV		M, A; put zero into buff
+0111   23           		INX		H; increment <HL>
+0112   77           		MOV		M, A; put zero into buff+1
+0113   23           		INX		H; increment <HL>
+0114   77           		MOV		M, A; put zero into buff+2
+0115   23           		INX		H; increment <HL>
+0116   77           		MOV		M, A; put zero into buff+3
+0117   23           		INX		H; increment <HL>
+0118   77           		MOV		M, A; put zero into buff+4
+0119   23           		INX		H; increment <HL>
+011A   77           		MOV		M, A; put zero into buff+5
+011B   23           		INX		H; increment <HL>
+011C   77           		MOV		M, A; put zero into buff+6
+011D   23           		INX		H; increment <HL>
+011E   77           		MOV		M, A; put zero into buff+7
+011F   23           		INX		H; increment <HL>
+0120   77           		MOV		M, A; put zero into buff+8
+0121   23           		INX		H; increment <HL>
+0122   77           		MOV		M, A; put zero into buff+9
+0123   21B302       		LXI		H, BUFF
+0126   CD3201       		CALL	READ
+0129   CD6A01       		CALL	PRINT
+012C   CD0000       		CALL	GBYE
+012F   C30000       		JMP		BOOT
+                    		
+                    ;Name: READ
+                    ;Input: None
+                    ;Function: receives the user's input, 
+                    ;gets rid of bad characters,
+                    ;and increments memory locations
+                    ;Destroyed Registers: 
+                    ;Subroutines Used: 
+0132   C5           READ:	PUSH	B
+0133   D5           		PUSH	D
+0134   1600         		MVI	D, 0
+0136   E5           READY:		PUSH 	H
+0137   0E01         		MVI	C, 1
+0139   CD0500       		CALL	BDOS
+013C   F5           		PUSH	PSW
+013D   FE0D         		CPI		CR
+013F   CA6501       		JZ		DONE
+0142   F1           		POP		PSW
+0143   DA5101       		JC		DELETE
+0146   D630         		SUI		'0'
+0148   5F           		MOV		E, A
+0149   19           		DAD		D
+014A   7E           		MOV		A, M
+014B   3C           		INR		A
+014C   77           		MOV		M, A
+014D   E1           		POP		H
+014E   C33601       		JMP		READY
+0151   1E08         DELETE:	MVI		E, 08H
+0153   0E02         		MVI		C, 2
+0155   CD0500       		CALL	BDOS
+0158   1E20         		MVI		E, 20H
+015A   CD0500       		CALL	BDOS
+015D   1E08         		MVI		E, 08H
+015F   CD0500       		CALL	BDOS
+0162   C33601       		JMP	READY
+0165   F1           DONE:		POP		PSW
+0166   E1           		POP		H
+0167   D1           		POP		D
+0168   C1           		POP		B
+0169   C9           		RET
+                    		
+                    ;Name: PRINT
+                    ;Input: None
+                    ;Function: Prints the histogram
+                    ;Destroyed Registers:
+                    ;Subroutines Used: ONELINE
+016A   C5           PRINT:	PUSH	B
+016B   0E09         		MVI		C, 9
+016D   112302       		LXI		D, MSG4
+0170   CD0500       		CALL	BDOS
+0173   060A         		MVI		B, 10
+0175   21B302       		LXI		H, BUFF
+0178   0E02         		MVI		C, 2
+017A   1E30         		MVI		E, '0'
+017C   7E           PRNTPT:		MOV		A, M
+017D   CD8801       		CALL	ONELINE
+0180   23           		INX		H
+0181   1C           		INR		E
+0182   05           		DCR		B
+0183   C27C01       		JNZ		PRNTPT	
+0186   C1           		POP		B
+0187   C9           		RET
+                    		
+                    ;Name: ONELINE
+                    ;Input: None
+                    ;Function: Prints a single line of the histogra
+                    ;Destroyed Registers:
+           

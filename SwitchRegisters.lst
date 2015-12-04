@@ -1,0 +1,15 @@
+
+asm85,  version 1.0f
+(c) 2010, M. D. Wagh
+
+                    ORG 100H
+0100   0602         MVI B, 2
+0102   0E03         MVI C, 3
+0104   215001       LXI H, 150H
+0107   C5           PUSH B
+0108   C1           POP B
+                    END
+
+      Symbol Table
+
+The file SwitchRegisters.asm has no syntax errors

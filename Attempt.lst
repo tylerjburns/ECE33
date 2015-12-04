@@ -1,0 +1,25 @@
+
+asm85,  version 1.0f
+(c) 2010, M. D. Wagh
+
+                    ;This program adds values in two slots
+                    ;and stores the output in a third slot
+                    ORG 0100H ;start of program
+0100   3E01         MVI A, 01H
+0102   060A         MVI B, 0AH
+0104   211501       LXI H, 0115H
+0107   77           MOV M,A
+0108   23           INX H
+0109   70           MOV M,B
+010A   3E00         MVI A,00
+010C   0600         MVI B,00
+010E   3A1501       LDA 0115H ;load first value into register A
+0111   211601       LXI H,0116H ;load address of second value into register H
+0114   46           MOV B,M   ;load value at H-L address into B
+0115   80           ADD B     ;add B to A
+0116   321701       STA 0117H ;store A into memory slot 0302H 
+                    END ;finishes program
+
+      Symbol Table
+
+The file Attempt.asm has no syntax errors

@@ -1,0 +1,51 @@
+
+asm85,  version 1.0f
+(c) 2010, M. D. Wagh
+
+                    ORG 100H
+                    BOOT EQU 0
+                    BDOS EQU 5
+                    CR EQU 0Dh
+                    LF EQU 0Ah
+0100   316301       LXI SP, SP0
+0103   0E09         MVI C, 9
+0105   112B01       LXI D, MSG1
+0108   CD0500       CALL BDOS
+010B   0E01         MVI C, 1
+010D   CD0500       CALL BDOS
+0110   F5           PUSH PSW
+0111   CD0500       CALL BDOS
+0114   F5           PUSH PSW
+0115   CD0500       CALL BDOS
+0118   0E02         MVI C, 2
+011A   5F           MOV E, A
+011B   CD0500       CALL BDOS
+011E   F1           POP PSW
+011F   5F           MOV E, A
+0120   CD0500       CALL BDOS
+0123   F1           POP PSW
+0124   5F           MOV E, A
+0125   CD0500       CALL BDOS
+0128   C30000       JMP BOOT
+012B   57656C63     MSG1: DB 'Welcome. Put in three characters.$',LF,'$'
+       6F6D652E  
+       20507574  
+       20696E20  
+       74687265  
+       65206368  
+       61726163  
+       74657273  
+       2E240A24  
+                    DS 20
+                    SP0 EQU $
+                    END
+
+      Symbol Table
+bdos         0005 (5)
+boot         0000 (0)
+cr           000D (13)
+lf           000A (10)
+msg1         012B (299)
+sp0          0163 (355)
+
+The file PrintReverse.asm has no syntax errors

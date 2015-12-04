@@ -1,0 +1,215 @@
+
+asm85,  version 1.0f
+(c) 2010, M. D. Wagh
+
+                    ;Tyler Burns
+                    ;ECE33
+                    ;10/25/15
+                    ;This program will take a sentence from the user,
+                    ;then it will take a word from the user
+                    ;and finally a position from the user.
+                    ;Then the program will place the word in the sentence
+                    ;after the word specified by the number input
+                    ;and print out the new sentence.
+                    	ORG	100H	;begin program and initialize all labels
+0100   313102       	LXI	SP, sp0
+                    BOOT	EQU	0	;boot
+                    BDOS	EQU	5	;bdos
+                    CR	EQU 	0DH	;carriage return
+                    LF	EQU 	0AH	;line feed
+                    PERIOD	EQU	2EH	;ascii period "."
+0103   0E09         	MVI	C, 9	; print message 1
+0105   11B301       	LXI	D, MSG1
+0108   CD0500       	CALL	BDOS
+010B   11C301       	LXI	D, MSG2	;print message 2
+010E   CD0500       	CALL	BDOS
+0111   CD2001       	CALL	INPUT
+0114   CD3001       	CALL	INPTWD
+0117   CD4901       	CALL	INPUT2
+011A   CD6E01       	CALL	PRINT
+011D   C30000       	JMP	BOOT
+                    
+                    ;Name:		INPUT
+                    ;Input:		None
+                    ;Function:	Receives user input and stores it in the buffer. If the character is not a period
+                    ;		the subroutine will repeat part of itself, storing more data.
+                    ;		When a period is received, the subroutine returns.
+                    ;Destroyed registers: A, C, H
+                    ;Subroutines used: None
+0120   0E01         INPUT:	MVI	C, 1
+0122   218102       	LXI	H, BUFF
+0125   CD0500       INPUTR:	CALL	BDOS
+0128   77           	MOV	M, A
+0129   23           	INX	H
+012A   FE2E         	CPI	PERIOD
+012C   C22501       	JNZ	INPUTR
+012F   C9           	RET
+                    	
+                    ;Name:		INPTWD
+                    ;Input:		None
+                    ;Function:	Receives the word the user wants to input
+                    ;		within the sentence and stores it in mem.
+                    ;Destroyed registers: C, D-E, H-L
+                    ;Subroutines used: None	
+0130   0E09         INPTWD:	MVI	C, 9
+0132   11DA01       	LXI	D, MSG3
+0135   CD0500       	CALL	BDOS	;print message 3
+0138   0E01         	MVI	C, 1
+013A   21A902       	LXI	H, BUFF2;change pointer to buff2
+013D   CD0500       INPTWR:	CALL	BDOS
+0140   77           	MOV	M, A	;store char
+0141   23           	INX	H
+0142   FE0D         	CPI	CR
+0144   C23D01       	JNZ	INPTWR	;if not CR, jump back and get another char
+0147   77           	MOV	M, A	;if zero, move CR to mem, then return
+0148   C9           	RET
+                    
+                    ;Name:		INPUT2
+                    ;Input:		None
+                    ;Function:	Receives the position the user wants to input
+                    ;		the word within the sentence.
+                    ;Destroyed registers: A, B, C, D-E
+                    ;Subroutines used: None
+0149   0E09         INPUT2:	MVI	C, 9
+014B   11FC01       	LXI	D, MSG4
+014E   CD0500       	CALL	BDOS	;print message 4
+0151   0E01         	MVI	C, 1
+0153   CD0500       	CALL	BDOS	;receive first value
+0156   D630         	SUI	'0'	;subtract ascii zero
+0158   47           	MOV	B, A	;move it to B register
+0159   CD0500       	CALL	BDOS	;bring in second value
+015C   0E00         	MVI	C, 0	;reset C, so that if it was CR, C is zero
+015E   FE0D         	CPI	CR	;compare to CR
+0160   CA6D01       	JZ	RET4	;if it's CR, return to main routine
+0163   D630         	SUI	'0'	;otherwise, subtract ascii zero
+0165   4F           	MOV	C, A	;move it to C
+0166   78           MULT:	MOV	A, B	;multiply the first value by 10
+0167   8F           	ADC	A
+0168   47           	MOV	B, A
+0169   8F           	ADC	A
+016A   8F           	ADC	A
+016B   88           	ADC	B
+016C   89           	ADC	C	;then add C to it
+016D   C9           RET4:	RET
+                    	
+                    ;Name:		PRINT
+                    ;Input:		From Memory
+                    ;Function:	Prints the original statement with
+                    ;		the new word within the sentence.
+                    ;Destroyed registers: A, C, E, H-L
+                    ;Subroutines used: SPACE
+016E   0E02         PRINT:	MVI	C, 2	;go to beginning of next line
+0170   1E0A         	MVI	E, LF	
+0172   CD0500       	CALL	BDOS
+0175   1E0D         	MVI	E, CR
+0177   CD0500       	CALL	BDOS
+017A   218102       	LXI	H, BUFF	;set pointer to buffer to start printing
+017D   5E           PRINTR:	MOV	E, M	;move the first char to E from mem
+017E   CD0500       	CALL	BDOS	;print it
+0181   23           	INX	H	;increment the pointer
+0182   7B           	MOV	A, E	;put the char in the accumulator
+0183   FE2E         	CPI	PERIOD	;compare it to a period
+0185   CA9301       	JZ	RET2	;if it's a period, return
+0188   FE20         	CPI	20H	;if not, compare it to space
+018A   C27D01       	JNZ	PRINTR	;if not a space, jump and get next char
+018D   CD9401       	CALL	SPACE	;if it is a space, call space
+0190   C37D01       	JMP	PRINTR	;jump back and get next char
+0193   C9           RET2:	RET
+                    	
+                    ;Name:		SPACE
+                    ;Input:		B, Memory
+                    ;Function:	Decrement B to keep count of the number of spaces
+                    ;		so that the added word can go in the right place.
+                    ;Destroyed registers: A, E
+                    ;Subroutines used: SPACE2
+0194   E5           SPACE:	PUSH	H	;save H-L pair
+0195   05           	DCR	B	;decrement B to keep track of spaces
+0196   C2AA01       	JNZ	RET3	;if it's not zero, return
+0199   21A902       	LXI	H, BUFF2;if it is zero point pointer at new word
+019C   5E           PRINTL:	MOV	E, M	;pull first char of new word into E and A
+019D   7B           	MOV	A, E
+019E   FE0D         	CPI	CR	;compare it to CR
+01A0   CAAC01       	JZ	SPACE2	;if it is CR, jump to SPACE2
+01A3   CD0500       	CALL	BDOS	;print the character if it's not CR
+01A6   23           	INX	H	;increment pointer
+01A7   C39C01       	JMP	PRINTL	;jump back to print next char
+01AA   E1           RET3:	POP	H	;pop H out before returning
+01AB   C9           	RET
+                    
+                    ;Name:		SPACE2
+                    ;Input:		None
+                    ;Function:	Prints a space when a CR is detected in SPACE.
+                    ;Destroyed registers: E
+                    ;Subroutines used: None
+01AC   1E20         SPACE2:	MVI	E, 20H	;put ascii for space in E
+01AE   CD0500       	CALL	BDOS	;print it
+01B1   E1           	POP	H	;pop H, then return, skipping SPACE
+                    			;since we jumped to this subroutine
+01B2   C9           	RET
+                    	
+01B3   53656E74     MSG1:	DB	'Sentence Editor$'
+       656E6365  
+       20456469  
+       746F7224  
+01C3   0A0D5479     MSG2:	DB	LF, CR, 'Type in a sentence: $'
+       70652069  
+       6E206120  
+       73656E74  
+       656E6365  
+       3A2024    
+01DA   0A0D496E     MSG3:	DB	LF, CR, 'Input word to add to sentence: $'
+       70757420  
+       776F7264  
+       20746F20  
+       61646420  
+       746F2073  
+       656E7465  
+       6E63653A  
+       2024      
+01FC   0A0D496E     MSG4:	DB	LF, CR, 'Input position to add a word: $'
+       70757420  
+       706F7369  
+       74696F6E  
+       20746F20  
+       61646420  
+       6120776F  
+       72643A20  
+       24        
+                    	DS	20
+                    sp0	EQU	$
+                    	DS	80
+                    BUFF	EQU	$
+                    	DS	40
+                    BUFF2	EQU	$
+                    
+                    END
+
+      Symbol Table
+bdos         0005 (5)
+boot         0000 (0)
+buff         0281 (641)
+buff2        02A9 (681)
+cr           000D (13)
+inptwd       0130 (304)
+inptwr       013D (317)
+input        0120 (288)
+input2       0149 (329)
+inputr       0125 (293)
+lf           000A (10)
+msg1         01B3 (435)
+msg2         01C3 (451)
+msg3         01DA (474)
+msg4         01FC (508)
+mult         0166 (358)
+period       002E (46)
+print        016E (366)
+printl       019C (412)
+printr       017D (381)
+ret2         0193 (403)
+ret3         01AA (426)
+ret4         016D (365)
+sp0          0231 (561)
+space        0194 (404)
+space2       01AC (428)
+
+The file prog2.asm has no syntax errors

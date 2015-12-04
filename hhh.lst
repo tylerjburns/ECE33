@@ -1,0 +1,137 @@
+
+asm85,  version 1.0f
+(c) 2010, M. D. Wagh
+
+                    
+                    		ORG		100H
+0100   310502       		LXI		SP, sp0
+                    BOOT	EQU		0
+                    BDOS	EQU		5
+                    CR		EQU		0DH
+                    LF		EQU		0AH
+0103   0E09         		MVI		C, 9
+0105   110000       		LXI		D, MSG1
+0108   CD0500       		CALL	BDOS
+010B   3E00         		MVI		A, 0
+010D   21B501       		LXI		H, BUFF; load buff pointer into <HL>
+0110   77           		MOV		M, A; put zero into buff
+0111   23           		INX		H; increment <HL>
+0112   77           		MOV		M, A; put zero into buff+1
+0113   23           		INX		H; increment <HL>
+0114   77           		MOV		M, A; put zero into buff+2
+0115   23           		INX		H; increment <HL>
+0116   77           		MOV		M, A; put zero into buff+3
+0117   23           		INX		H; increment <HL>
+0118   77           		MOV		M, A; put zero into buff+4
+0119   23           		INX		H; increment <HL>
+011A   77           		MOV		M, A; put zero into buff+5
+011B   23           		INX		H; increment <HL>
+011C   77           		MOV		M, A; 6
+011D   23           		INX		H; increment <HL>
+011E   77           		MOV		M, A; p
+011F   23           		INX		H; increment <HL>
+0120   77           		MOV		M, A; 
+0121   23           		INX		H; increment <HL>
+0122   77           		MOV		M, A;
+0123   CD2F01       		CALL	READ
+0126   CD5E01       		CALL	PRINT
+0129   CD0000       		CALL	GBYE
+012C   C30000       		JMP		BOOT
+                    
+012F   C5           READ:	PUSH	B
+0130   D5           		PUSH	D
+0131   0E01         READY:	MVI		C, 1
+0133   CD0500       		CALL	BDOS
+0136   F5           		PUSH	PSW
+0137   FE0D         		CPI		CR
+0139   CA5B01       		JZ		DONE
+013C   F1           		POP		PSW
+013D   DA4A01       		JC		DELETE
+0140   D630         		SUI		'0'
+0142   5F           		MOV		E, A
+0143   19           		DAD		D
+0144   7E           		MOV		A, M
+0145   3C           		INR		A
+0146   77           		MOV		M, A
+0147   C33101       		JMP		READY
+014A   1E08         DELETE:	MVI		E, 08H
+014C   0E02         		MVI		C, 2
+014E   CD0500       		CALL	BDOS
+0151   1E20         		MVI		E, ' '
+0153   CD0500       		CALL	BDOS
+0156   1E08         		MVI		E, 08H
+0158   CD0500       		CALL	BDOS
+015B   D1           DONE:	POP		D
+015C   C1           		POP		B
+015D   C9           		RET
+                    		
+                    
+015E   C5           PRINT:	PUSH	B
+015F   0E09         		MVI		C, 9
+0161   110000       		LXI		D, MSG4
+0164   CD0500       		CALL	BDOS
+0167   060A         		MVI		B, 10
+0169   21B501       		LXI		H, BUFF
+016C   0E02         		MVI		C, 2
+016E   1E30         		MVI		E, '0'
+0170   7E           PRNTPT:	MOV		A, M
+0171   CD7C01       		CALL	ONELINE
+0174   23           		INX		H
+0175   1C           		INR		E
+0176   05           		DCR		B
+0177   C27001       		JNZ		PRNTPT	
+017A   C1           		POP		B
+017B   C9           		RET
+017C   C5           ONELINE:	PUSH	B
+017D   D5           		PUSH	D
+017E   0E02         		MVI		C, 2
+0180   CD0500       		CALL	BDOS
+0183   0E09         		MVI		C, 9
+0185   110000       		LXI		D, COLON
+0188   CD0500       		CALL	BDOS
+018B   FE00         		CPI		0
+018D   CA9C01       		JZ		DONE2
+0190   0E09         		MVI		C, 9
+0192   110000       		LXI		D, XS
+0195   CD0500       AGAIN:	CALL	BDOS
+0198   3D           		DCR		A
+0199   C29501       		JNZ		AGAIN
+019C   0E02         DONE2:	MVI		C, 2
+019E   1E0A         		MVI		E, LF
+01A0   CD0500       		CALL	BDOS
+01A3   1E0D         		MVI		E, CR
+01A5   CD0500       		CALL	BDOS
+01A8   D1           		POP		D
+01A9   C1           		POP		B
+01AA   C9           		RET
+                    
+                    		DS		10
+                    BUFF		EQU		$
+                    		DS		80
+                    sp0		EQU		$
+                    
+                    END
+
+      Symbol Table
+again        0195 (405)
+bdos         0005 (5)
+boot         0000 (0)
+buff         01B5 (437)
+colon        0000 (0)
+cr           000D (13)
+delete       014A (330)
+done         015B (347)
+done2        019C (412)
+gbye         0000 (0)
+lf           000A (10)
+msg1         0000 (0)
+msg4         0000 (0)
+oneline      017C (380)
+print        015E (350)
+prntpt       0170 (368)
+read         012F (303)
+ready        0131 (305)
+sp0          0205 (517)
+xs           0000 (0)
+
+The file hhh.asm has no syntax errors

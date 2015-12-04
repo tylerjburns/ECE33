@@ -1,0 +1,328 @@
+
+asm85,  version 1.0f
+(c) 2010, M. D. Wagh
+
+                    ;Zachary Hille
+                    ;Prog3
+                       bdos      equ    5            ; CP/M function call address
+                       boot      equ    0            ; address to get back to CP/M
+                       conin     equ    1            ; keyboard read
+                       conout    equ    2            ; character out
+                       sprint    equ    9            ; string print
+                       cr        equ    0Dh          ; ASCII cr
+                       lf        equ    0Ah          ; ASCII lf
+                       space     equ    20h          ; space 
+                       period 	 equ    2Eh 		 ;period;
+                       backspace equ	08h			 ;backspace
+                    ;
+                                 org    100h         ; standard origin for CP/M
+0100   313604                    lxi    sp,sp0       ; initialize stack pointer]
+0103   210E02       			 lxi    h,buff1;
+0106   3E00         			 mvi a,0;
+0108   0600         			 mvi b,0; initialize the abilty to count
+010A   CDA001       			 call clearmem;
+                    ;
+010D   0E09                      mvi    c,sprint     ; print start message
+010F   11B601                    lxi    d,mess1      ; (the message at mess1 is printed through
+0112   CD0500                    call   bdos         ; these three lines)
+0115   0E09         			 mvi c, sprint
+0117   11C501       			 lxi	d,mess2		 ; Type a sentence
+011A   CD0500       			 call   bdos
+011D   CD2601       			 call takeDigs ;take numbers
+0120   CD6101       			 call printer  ;print 'em out
+                    			 
+                    			 
+0123   C30000       			 jmp boot    ;end
+                    			 
+                    			 
+0126   D5           			 takeDigs: push d; to not destroy registers
+0127   E5           			 moreDigs: push h;
+0128   1600         			 mvi d,0; to make sure we don't get any interference
+012A   1E00         			 mvi e,0; for when we add
+012C   0E01         			 mvi c,conin
+012E   04           			inr b; 
+012F   CD0500       			 call bdos
+0132   FE0D         			 cpi cr; do we end?
+0134   CA4C01       			 jz fin;
+0137   FE30         			 cpi '0' ; to check input is a num
+0139   FC4F01       			 cm reprint;
+013C   FE3A         			 cpi '9'+1;
+013E   F44F01       			 cp reprint; erase non letters
+0141   DE2F         			 sbi '0'-1;
+0143   5F           			 mov e,a;
+0144   19           			 dad d; find which buffer zone this goes in
+0145   7E           			 mov a,M; based on #
+0146   3C           			 inr a;
+0147   77           			 mov M,a;
+0148   E1           			 pop h
+0149   C32701       			 jmp moreDigs; get more #'s unless
+014C   E1           			 fin: pop h;cr entered
+014D   D1           			 pop d;
+014E   C9           			 ret; after numbers, return
+                    			 
+014F   0E02         			 reprint: mvi c,conout;if a non # entered
+0151   1E08         			 mvi e,backspace; backspace,
+0153   CD0500       			 call bdos;
+0156   1E20         			 mvi e,space; print over it,
+0158   CD0500       			 call bdos;
+015B   1E08         			 mvi e,backspace; then print on it again
+015D   CD0500       			 call bdos;
+0160   C9           			 ret;
+                    
+0161   0E02         			 printer: mvi c,conout;print out our histogram
+0163   0600         			   mvi b,0;
+0165   210E02       			   lxi h, buff1; reset to our first buffzone
+0168   0E09         			   moprint: mvi c,sprint
+016A   11F001       			   lxi d,mess4 ; print ouf # of message
+016D   CD0500       			   call bdos;
+0170   78           			   mov a,b;
+0171   C630         			   adi '0'; print ouf # we are on
+0173   0E02         			   mvi c,conout
+0175   5F           			   mov e,a;
+0176   CD0500       			   call bdos;
+0179   0E09         			   mvi c,sprint;
+017B   11FD01       			   lxi d,mess5; print out the letter s
+017E   CD0500       			   call bdos;
+0181   7E           			   mov a,M;
+                    			   ;mvi c,conout;
+                    			   ;adi '0';
+                    			   ;mov e,a;
+                    			   ;call bdos
+0182   CD9103       			   call xs; print out correct X's
+0185   23           			   inx h; print out from memory
+0186   04           			   inr b; count how many we've printed
+0187   78           			   mov a,b; have we printed
+0188   FE0A         			   cpi 10; more than our 10?
+018A   C26801       			   jnz moprint; if no, go again
+018D   C9           			   ret; if so, stop yo.
+                    			 
+018E   FE00         			 xs: cpi 0; do we need to print zero?
+0190   CA9F01       			 jz fin2; if so, end.
+0193   0E09         			 mvi c,sprint; if not, print
+0195   110202       			 lxi d,mess6; an x.
+0198   CD0500       			 call bdos;
+019B   3D           			 dcr A; # left to print is 1 less
+019C   C38E01       			 jmp xs; do again.
+019F   C9           			 fin2: ret;
+                    			 
+01A0   E5           			 clearmem: push H; to clear memory, so if no #'s are enters, zero is output, not a weird number
+                    ;			so if no #'s are enters, ;
+                    ;			zero is output, not a weird number
+01A1   77           			 mov M,a;set 0 counter
+01A2   2C           			 inr L;
+01A3   77           			 mov M,a ;set 1;
+01A4   2C           			 inr L
+01A5   77           			 mov M,a; set 2;
+01A6   2C           			 inr L;
+01A7   77           			 mov M,a;3
+01A8   2C           			 inr L
+01A9   77           			 mov M,a;4
+01AA   2C           			 inr L;
+01AB   77           			 mov M,a;5
+01AC   2C           			 inr L
+01AD   77           			 mov M,a;6
+01AE   2C           			 inr L;
+01AF   77           			 mov M,a;7
+01B0   2C           			 inr L
+01B1   77           			 mov M,a; set 8 counter;
+01B2   2C           			 inr L;			
+01B3   77           			 mov M,a;
+01B4   E1           			 pop H;
+01B5   C9           			 ret;
+                    			 
+                    			 ;begin massages
+01B6   54686520     			 mess1: db 'The Histrogram$'
+       48697374  
+       726F6772  
+       616D24    
+01C5   0A0D506C     			 mess2: db lf,cr,'Please enter your digits: $'
+       65617365  
+       20656E74  
+       65722079  
+       6F757220  
+       64696769  
+       74733A20  
+       24        
+01E2   0A0D4869     			 mess3: db lf,cr,'Histogram: $'
+       73746F67  
+       72616D3A  
+       2024      
+01F0   0A0D4E75     			 mess4: db lf,cr,'Number of $'
+       6D626572  
+       206F6620  
+       24        
+01FD   733A2020     			 mess5: db 's:  $'
+       24        
+0202   5824         			 mess6: db 'X$'
+                    			 ;
+                    			 ds 10 ; 
+                    			 buff1 equ $
+                    			 ds 40 ;
+                    			 sp0 equ  $
+                    			 
+                    			 ;Tyler Burns
+                    ;ECE 33
+                    ;Program 3
+                    ;11/13/15
+                    ;This program will create a text 
+                    ;histogram of a string of numbers input by the user.
+                    
+0236   0E09         		MVI		C, 9
+0238   11EA02       		LXI		D, MSG1
+023B   CD0500       		CALL	BDOS
+023E   3E00         		MVI		A, 0
+0240   21E603       		LXI		H, BUFF; load buff pointer into <HL>
+0243   77           		MOV		M, A; put zero into buff
+0244   23           		INX		H; increment <HL>
+0245   77           		MOV		M, A; put zero into buff+1
+0246   23           		INX		H; increment <HL>
+0247   77           		MOV		M, A; put zero into buff+2
+0248   23           		INX		H; increment <HL>
+0249   77           		MOV		M, A; put zero into buff+3
+024A   23           		INX		H; increment <HL>
+024B   77           		MOV		M, A; put zero into buff+4
+024C   23           		INX		H; increment <HL>
+024D   77           		MOV		M, A; put zero into buff+5
+024E   23           		INX		H; increment <HL>
+024F   77           		MOV		M, A; put zero into buff+6
+0250   23           		INX		H; increment <HL>
+0251   77           		MOV		M, A; put zero into buff+7
+0252   23           		INX		H; increment <HL>
+0253   77           		MOV		M, A; put zero into buff+8
+0254   23           		INX		H; increment <HL>
+0255   77           		MOV		M, A; put zero into buff+9
+0256   21E603       		LXI		H, BUFF
+0259   CD6502       		CALL	READ
+025C   CD9D02       		CALL	PRINT
+025F   CD0000       		CALL	GBYE
+0262   C30000       		JMP		BOOT
+                    		
+                    ;Name: READ
+                    ;Input: None
+                    ;Function: receives the user's input, 
+                    ;gets rid of bad characters,
+                    ;and increments memory locations
+                    ;Destroyed Registers: 
+                    ;Subroutines Used: 
+0265   C5           READ:	PUSH	B
+0266   D5           		PUSH	D
+0267   1600         		MVI	D, 0
+0269   E5           READY:		PUSH 	H
+026A   0E01         		MVI	C, 1
+026C   CD0500       		CALL	BDOS
+026F   F5           		PUSH	PSW
+0270   FE0D         		CPI		CR
+0272   CA9802       		JZ		DONE
+0275   F1           		POP		PSW
+0276   DA8402       		JC		DELETE
+0279   D630         		SUI		'0'
+027B   5F           		MOV		E, A
+027C   19           		DAD		D
+027D   7E           		MOV		A, M
+027E   3C           		INR		A
+027F   77           		MOV		M, A
+0280   E1           		POP		H
+0281   C36902       		JMP		READY
+0284   1E08         DELETE:	MVI		E, 08H
+0286   0E02         		MVI		C, 2
+0288   CD0500       		CALL	BDOS
+028B   1E20         		MVI		E, 20H
+028D   CD0500       		CALL	BDOS
+0290   1E08         		MVI		E, 08H
+0292   CD0500       		CALL	BDOS
+0295   C36902       		JMP	READY
+0298   F1           DONE:		POP		PSW
+0299   E1           		POP		H
+029A   D1           		POP		D
+029B   C1           		POP		B
+029C   C9           		RET
+                    		
+                    ;Name: PRINT
+                    ;Input: None
+                    ;Function: Prints the histogram
+                    ;Destroyed Registers:
+                    ;Subroutines Used: ONELINE
+029D   C5           PRINT:	PUSH	B
+029E   0E09         		MVI		C, 9
+02A0   115603       		LXI		D, MSG4
+02A3   CD0500       		CALL	BDOS
+02A6   060A         		MVI		B, 10
+02A8   21E603       		LXI		H, BUFF
+02AB   0E02         		MVI		C, 2
+02AD   1E30         		MVI		E, '0'
+02AF   7E           PRNTPT:		MOV		A, M
+02B0   CDBB02       		CALL	ONELINE
+02B3   23           		INX		H
+02B4   1C           		INR		E
+02B5   05           		DCR		B
+02B6   C2AF02       		JNZ		PRNTPT	
+02B9   C1           		POP		B
+02BA   C9           		RET
+                    		
+                    ;Name: ONELINE
+                    ;Input: None
+                    ;Function: Prints a single line of the histogra
+                    ;Destroyed Registers:
+                    ;Subroutines Used: 
+02BB   C5           ONELINE:	PUSH	B
+02BC   D5           		PUSH	D
+02BD   0E02         		MVI		C, 2
+02BF   CD0500       		CALL	BDOS
+02C2   0E09         		MVI		C, 9
+02C4   118E03       		LXI		D, COLON
+02C7   CD0500       		CALL	BDOS
+02CA   FE00         		CPI		0
+02CC   CADB02       		JZ		DONE2
+02CF   0E09         		MVI		C, 9
+02D1   118E01       		LXI		D, XS
+02D4   CD0500       AGAIN:	CALL	BDOS
+02D7   3D           		DCR		A
+02D8   C2D402       		JNZ		AGAIN
+02DB   0E02         DONE2:	MVI		C, 2
+02DD   1E0A         		MVI		E, LF
+02DF   CD0500       		CALL	BDOS
+02E2   1E0D         		MVI		E, CR
+02E4   CD0500       		CALL	BDOS
+02E7   D1           		POP		D
+02E8   C1           		POP		B
+02E9   C9           		RET
+                    
+02EA   54686520     MSG1:	DB		'The Digital Histogram$'
+       44696769  
+       74616C20  
+       48697374  
+       6F677261  
+       6D24      
+0300   0A0D4669     MSG2:	DB		LF, CR, 'Find out which numbers are subconsciously important to you$'
+       6E64206F  
+       75742077  
+       68696368  
+       206E756D  
+       62657273  
+       20617265  
+       20737562  
+       636F6E73  
+       63696F75  
+       736C7920  
+       696D706F  
+       7274616E  
+       7420746F  
+       20796F75  
+       24        
+033D   0A0D5479     MSG3:	DB		LF, CR, 'Type about 40 digits: $'
+       70652061  
+       626F7574  
+       20343020  
+       64696769  
+       74733A20  
+       24        
+0356   0A0D596F     MSG4:	DB		LF, CR, 'Your Histogram', LF, CR, '-----------------------------------', LF, CR, '$'
+       75722048  
+       6973746F  
+       6772616D  
+       0A0D2D2D  
+       2D2D2D2D  
+       2D2D2D2D  
+       2D2D2D2D  
+       2D2D2D2D  
+  

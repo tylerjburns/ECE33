@@ -1,0 +1,333 @@
+
+asm85,  version 1.0f
+(c) 2010, M. D. Wagh
+
+
+Assembly Pass 1
+                    ;
+                    ;  This is an example program by MDW showing how two 16 bit
+                    ;  strings are added.  The strings are stored at addresses
+                    ;  (highA, lowA) and (highB, lowB).  The result is
+                    ;  stored at (highC, lowC).  The important point that needs
+                    ;  to be observed is the proper use of subroutines and comments.
+                    ;
+                    ;  Default values of the operands are 4532 (Hex) and 2ADD (Hex).
+                    ;  they may be changed by changing appropriate memory locations.
+                    ;  Look at the .prn file to identify these locations.
+                    
+                       bdos     equ    5            ; all CP/M related constants
+                       boot     equ    0
+                       sprint   equ    9            ; function number to print a string
+                       conin    equ    1            ; function number to input a character
+                       conout   equ    2            ; function number to output a character
+                    
+                                org    100h         ; MUST use this origin always
+                                                    ; it is a CP/M constraint
+0100   310000                   lxi    sp,stkpt     ; this is ESSENTIAL if subroutines are used
+0103   0E09                     mvi    c,sprint
+0105   110000                   lxi    d,mess1
+0108   CD0500                   call   bdos         ; CP/M call to print message at address mess1
+010B   210000                   lxi    h,lowA       ; getting ready to do lower byte addition
+010E   7E                       mov    a,m          ; load first operand (lower byte)
+010F   23                       inx    h
+0110   86                       add    m            ; add second operand (lower byte)
+0111   23                       inx    h
+0112   77                       mov    m,a          ; store the lower byte of addition result
+0113   23                       inx    h            ; now do the higher byte addition
+0114   7E                       mov    a,m
+0115   23                       inx    h
+0116   8E                       adc    m            ; carry generated in previous add is used here
+0117   23                       inx    h
+0118   77                       mov    m,a          ; store the higher byte
+0119   210000                   lxi    h,highA
+011C   CD0000                   call   outnum       ; to print out first operand
+011F   1E2B                     mvi    e,'+'
+0121   0E02                     mvi    c,conout
+0123   CD0500                   call   bdos         ; CP/M call to print plus sign
+0126   210000                   lxi    h,highB
+0129   CD0000                   call   outnum       ; to print out second operand
+012C   1E3D                     mvi    e,'='
+012E   0E02                     mvi    c,conout
+0130   CD0500                   call   bdos         ; CP/M call to print equal sign
+0133   210000                   lxi    h,highC
+0136   CD0000                   call   outnum       ; to print out the result
+0139   C30000                   jmp    boot         ; the ONLY logical way to end the program
+                                                    ; execution and give control back to
+                                                    ; operationg system.
+                    ;  Main program ends here, now come all the subroutines
+                    ;
+                    ;           Subroutine outnum
+                    ;             input  : an address in H-L register pair
+                    ;             action : print the byte at the address in H-L pair and
+                    ;                      then print byte at address 3 less then the previous
+                    ;                      ( thus for example higherA followed by lowerA)
+                    ;             registers destroyed : H-L pair
+                    ;             subroutines used    : outbyte
+                    
+013C   F5              outnum:  push   psw          ; just making sure that registers used
+                                                    ; in the routine are not destroyed
+013D   7E                       mov    a,m
+013E   CD0000                   call   outbyte      ; print the first byte
+0141   2B                       dcx    h
+0142   2B                       dcx    h
+0143   2B                       dcx    h
+0144   7E                       mov    a,m
+0145   CD0000                   call   outbyte      ; print the second byte
+0148   F1                       pop    psw          ; restore a and flag register
+0149   C9                       ret                 ; and return
+                    
+                    ;           Subroutine outbyte
+                    ;             input : the byte to be printed in A
+                    ;             action : print the byte in A
+                    ;             registers destroyed : none
+                    ;             subroutines used : outcode
+                    
+014A   F5             outbyte:  push   psw          ; save registers that are used
+014B   C5                       push   b
+014C   47                       mov    b,a          ; make a copy of the data
+014D   E6F0                     ani    0f0h         ; tap the first four bits (higher nibble !)
+014F   07                       rlc                 ; and shift them to the right edge
+0150   07                       rlc
+0151   07                       rlc
+0152   07                       rlc
+0153   CD0000                   call   outcode      ; print the higher nibble
+0156   78                       mov    a,b          ; get the original data put away in b
+0157   E60F                     ani    0fh          ; tap the lower nibble
+0159   CD0000                   call   outcode      ; print the lower nibble
+015C   C1                       pop    b            ; restore registers
+015D   F1                       pop    psw
+015E   C9                       ret                 ; and return
+                    
+                    ;           Subroutine outcode
+                    ;             input : a nibble (4 bits) in register a
+                    ;             action : to print the hex code of the nibble
+                    ;             registers destroyed : none
+                    ;             subroutines used : none
+                    
+015F   F5              outcode: push   psw          ; save registers used
+0160   C5                       push   b
+0161   D5                       push   d
+0162   FE0A                     cpi    10           ; find whether to print digit or letter
+0164   D20000                   jnc    code1        ; no carry implies a letter
+0167   C630                     adi    '0'          ; generate ASCII code of the digit
+0169   C30000                   jmp    code2
+016C   C637            code1:   adi    'A' - 10     ; generates ASCII code of the letter
+016E   5F              code2:   mov    e,a
+016F   0E02                     mvi    c,conout
+0171   CD0500                   call   bdos         ; CP/M call to print the ASCII code
+0174   D1                       pop    d            ; restore registers
+0175   C1                       pop    b
+0176   F1                       pop    psw
+0177   C9                       ret                 ; and return
+                    
+                    ;  This ends subroutines.  Now comes the data and space for stack.
+                    
+0178   32              lowA:    db     32h          ; default values, try changing them
+0179   DD              lowB:    db     0DDh
+                       lowC:    ds     1            ; 1 byte space for lower byte of result
+017B   45              highA:   db     45h
+017C   2A              highB:   db     2Ah
+                       highC:   ds     1            ; higher byte of result
+017E   41646469        mess1:   db     'Addition of two 16 bit strings',0Ah,0Dh,0Ah,0Ah,'$'
+       74696F6E  
+       206F6620  
+       74776F20  
+       31362062  
+       69742073  
+       7472696E  
+       67730A0D  
+       0A0A24    
+                                                    ; note that the message MUST end with a '$'.
+                                                    ; 0Ah and 0Dh are codes for Line Feed and
+                                                    ; Carriage Return respectively
+                                ds     30           ; reserve 30 bytes for stack
+                       stkpt    equ    $
+                                end                 ; assembler directive, not an instruction
+
+
+      Symbol Table
+bdos         0005 (5)
+boot         0000 (0)
+code1        016C (364)
+code2        016E (366)
+conin        0001 (1)
+conout       0002 (2)
+higha        017B (379)
+highb        017C (380)
+highc        017D (381)
+lowa         0178 (376)
+lowb         0179 (377)
+lowc         017A (378)
+mess1        017E (382)
+outbyte      014A (330)
+outcode      015F (351)
+outnum       013C (316)
+sprint       0009 (9)
+stkpt        01BF (447)
+
+
+
+
+Assembly Pass 2
+                    ;
+                    ;  This is an example program by MDW showing how two 16 bit
+                    ;  strings are added.  The strings are stored at addresses
+                    ;  (highA, lowA) and (highB, lowB).  The result is
+                    ;  stored at (highC, lowC).  The important point that needs
+                    ;  to be observed is the proper use of subroutines and comments.
+                    ;
+                    ;  Default values of the operands are 4532 (Hex) and 2ADD (Hex).
+                    ;  they may be changed by changing appropriate memory locations.
+                    ;  Look at the .prn file to identify these locations.
+                    
+                       bdos     equ    5            ; all CP/M related constants
+                       boot     equ    0
+                       sprint   equ    9            ; function number to print a string
+                       conin    equ    1            ; function number to input a character
+                       conout   equ    2            ; function number to output a character
+                    
+                                org    100h         ; MUST use this origin always
+                                                    ; it is a CP/M constraint
+0100   31BF01                   lxi    sp,stkpt     ; this is ESSENTIAL if subroutines are used
+0103   0E09                     mvi    c,sprint
+0105   117E01                   lxi    d,mess1
+0108   CD0500                   call   bdos         ; CP/M call to print message at address mess1
+010B   217801                   lxi    h,lowA       ; getting ready to do lower byte addition
+010E   7E                       mov    a,m          ; load first operand (lower byte)
+010F   23                       inx    h
+0110   86                       add    m            ; add second operand (lower byte)
+0111   23                       inx    h
+0112   77                       mov    m,a          ; store the lower byte of addition result
+0113   23                       inx    h            ; now do the higher byte addition
+0114   7E                       mov    a,m
+0115   23                       inx    h
+0116   8E                       adc    m            ; carry generated in previous add is used here
+0117   23                       inx    h
+0118   77                       mov    m,a          ; store the higher byte
+0119   217B01                   lxi    h,highA
+011C   CD3C01                   call   outnum       ; to print out first operand
+011F   1E2B                     mvi    e,'+'
+0121   0E02                     mvi    c,conout
+0123   CD0500                   call   bdos         ; CP/M call to print plus sign
+0126   217C01                   lxi    h,highB
+0129   CD3C01                   call   outnum       ; to print out second operand
+012C   1E3D                     mvi    e,'='
+012E   0E02                     mvi    c,conout
+0130   CD0500                   call   bdos         ; CP/M call to print equal sign
+0133   217D01                   lxi    h,highC
+0136   CD3C01                   call   outnum       ; to print out the result
+0139   C30000                   jmp    boot         ; the ONLY logical way to end the program
+                                                    ; execution and give control back to
+                                                    ; operationg system.
+                    ;  Main program ends here, now come all the subroutines
+                    ;
+                    ;           Subroutine outnum
+                    ;             input  : an address in H-L register pair
+                    ;             action : print the byte at the address in H-L pair and
+                    ;                      then print byte at address 3 less then the previous
+                    ;                      ( thus for example higherA followed by lowerA)
+                    ;             registers destroyed : H-L pair
+                    ;             subroutines used    : outbyte
+                    
+013C   F5              outnum:  push   psw          ; just making sure that registers used
+                                                    ; in the routine are not destroyed
+013D   7E                       mov    a,m
+013E   CD4A01                   call   outbyte      ; print the first byte
+0141   2B                       dcx    h
+0142   2B                       dcx    h
+0143   2B                       dcx    h
+0144   7E                       mov    a,m
+0145   CD4A01                   call   outbyte      ; print the second byte
+0148   F1                       pop    psw          ; restore a and flag register
+0149   C9                       ret                 ; and return
+                    
+                    ;           Subroutine outbyte
+                    ;             input : the byte to be printed in A
+                    ;             action : print the byte in A
+                    ;             registers destroyed : none
+                    ;             subroutines used : outcode
+                    
+014A   F5             outbyte:  push   psw          ; save registers that are used
+014B   C5                       push   b
+014C   47                       mov    b,a          ; make a copy of the data
+014D   E6F0                     ani    0f0h         ; tap the first four bits (higher nibble !)
+014F   07                       rlc                 ; and shift them to the right edge
+0150   07                       rlc
+0151   07                       rlc
+0152   07                       rlc
+0153   CD5F01                   call   outcode      ; print the higher nibble
+0156   78                       mov    a,b          ; get the original data put away in b
+0157   E60F                     ani    0fh          ; tap the lower nibble
+0159   CD5F01                   call   outcode      ; print the lower nibble
+015C   C1                       pop    b            ; restore registers
+015D   F1                       pop    psw
+015E   C9                       ret                 ; and return
+                    
+                    ;           Subroutine outcode
+                    ;             input : a nibble (4 bits) in register a
+                    ;             action : to print the hex code of the nibble
+                    ;             registers destroyed : none
+                    ;             subroutines used : none
+                    
+015F   F5              outcode: push   psw          ; save registers used
+0160   C5                       push   b
+0161   D5                       push   d
+0162   FE0A                     cpi    10           ; find whether to print digit or letter
+0164   D26C01                   jnc    code1        ; no carry implies a letter
+0167   C630                     adi    '0'          ; generate ASCII code of the digit
+0169   C36E01                   jmp    code2
+016C   C637            code1:   adi    'A' - 10     ; generates ASCII code of the letter
+016E   5F              code2:   mov    e,a
+016F   0E02                     mvi    c,conout
+0171   CD0500                   call   bdos         ; CP/M call to print the ASCII code
+0174   D1                       pop    d            ; restore registers
+0175   C1                       pop    b
+0176   F1                       pop    psw
+0177   C9                       ret                 ; and return
+                    
+                    ;  This ends subroutines.  Now comes the data and space for stack.
+                    
+0178   32              lowA:    db     32h          ; default values, try changing them
+0179   DD              lowB:    db     0DDh
+                       lowC:    ds     1            ; 1 byte space for lower byte of result
+017B   45              highA:   db     45h
+017C   2A              highB:   db     2Ah
+                       highC:   ds     1            ; higher byte of result
+017E   41646469        mess1:   db     'Addition of two 16 bit strings',0Ah,0Dh,0Ah,0Ah,'$'
+       74696F6E  
+       206F6620  
+       74776F20  
+       31362062  
+       69742073  
+       7472696E  
+       67730A0D  
+       0A0A24    
+                                                    ; note that the message MUST end with a '$'.
+                                                    ; 0Ah and 0Dh are codes for Line Feed and
+                                                    ; Carriage Return respectively
+                                ds     30           ; reserve 30 bytes for stack
+                       stkpt    equ    $
+                                end                 ; assembler directive, not an instruction
+
+
+      Symbol Table
+bdos         0005 (5)
+boot         0000 (0)
+code1        016C (364)
+code2        016E (366)
+conin        0001 (1)
+conout       0002 (2)
+higha        017B (379)
+highb        017C (380)
+highc        017D (381)
+lowa         0178 (376)
+lowb         0179 (377)
+lowc         017A (378)
+mess1        017E (382)
+outbyte      014A (330)
+outcode      015F (351)
+outnum       013C (316)
+sprint       0009 (9)
+stkpt        01BF (447)
+
+The file F:\Documents\University\2015 - 2016\Principles of Computer Engin01BF has no syntax errors
