@@ -14,11 +14,17 @@ MINUS	EQU		2DH
 		MVI		C, 9
 		LXI		D, MSG1
 		CALL	BDOS
-		CALL	READ1
+CALC:	CALL	READ1
+		CPI		CR
+		JZ		BOOT
 		CALL	READ2
+		CPI		CR
+		JZ		BOOT
+		DAD		D
+		CALL	PRINT
+		JMP		CALC
 		
 READ1:	PUSH	B
-		PUSH	D
 		MVI		D, 0
 		MVI		C, 1
 		CALL	BDOS
@@ -28,22 +34,28 @@ READ1:	PUSH	B
 		JZ		READN
 READP:	CPI		PLUS
 		JZ		DONE
-		CPI		'0'
+		CPI		'+'
 		JM		DELETE
 		CPI		'9'+1
 		JP		DELETE
 		SUI		'0'
-		MOV		E, A
-		DAD		D
-		MOV		A, M
-		INR		A
-		MOV		M, A
-		JMP		READY
+		CALL	MULT
+		DAD		A
+		JMP		READP
 READN:	MVI		C, 1
 		CALL	BDOS
 		CPI		CR
 		JZ		DONE
-		
+		CPI		PLUS
+		JZ		DONE
+		CPI		'+'
+		JM		DELETE
+		CPI		'9'+1
+		JP		DELETE
+		SUI		'0'
+		CALL	MULT
+		DAD		A
+		JMP		READY
 DELETE:	MVI		E, 08H
 		MVI		C, 2
 		CALL	BDOS
@@ -52,10 +64,117 @@ DELETE:	MVI		E, 08H
 		MVI		E, 08H
 		CALL	BDOS
 		JMP		READY
-DONE:	POP		D
-		POP		B
+DONEN:	MVI		A, 0
+		SUB		L
+		MOV		L, A
+		MVI		A, 0
+		SBB		H
+		MOV		H, A
+		MVI		D, 0
+		MVI		E, 0
+		XCHG
+DONE:	POP		B
+		RET
+		
+READ2:	PUSH	B
+		MVI		D, 0
+		MVI		C, 1
+		CALL	BDOS
+		CPI		CR
+		JZ		DONE
+		CPI		MINUS
+		JZ		READN
+READP:	CPI		PLUS
+		JZ		DONE
+		CPI		'+'
+		JM		DELETE
+		CPI		'9'+1
+		JP		DELETE
+		SUI		'0'
+		CALL	MULT
+		DAD		A
+		JMP		READP
+READN:	MVI		C, 1
+		CALL	BDOS
+		CPI		CR
+		JZ		DONE
+		CPI		PLUS
+		JZ		DONE
+		CPI		'+'
+		JM		DELETE
+		CPI		'9'+1
+		JP		DELETE
+		SUI		'0'
+		CALL	MULT
+		DAD		A
+		JMP		READY
+DELETE:	MVI		E, 08H
+		MVI		C, 2
+		CALL	BDOS
+		MVI		E, 20H
+		CALL	BDOS
+		MVI		E, 08H
+		CALL	BDOS
+		JMP		READY
+DONEN:	MVI		A, 0
+		SUB		L
+		MOV		L, A
+		MVI		A, 0
+		SBB		H
+		MOV		H, A
+DONE:	POP		B
 		RET
 
+MULT:	PUSH	D
+		DAD		H
+		MOV		D, H
+		MOV		E, L
+		DAD		H
+		DAD		H
+		DAD		D
+		POP		D
+		RET
+		
+PRINT:	PUSH	D
+		MVI		E, '='
+		MVI		C, 2
+		CALL	BDOS
+		MVI		E, 0
+		MOV		A, H
+CONT:	SUI		10000
+		JC		CONT2
+		INR		E
+		JMP		CONT
+CONT2:	CALL	BDOS
+		MVI		E, 0
+		SUI		1000
+		JC		CONT3
+		INR		E
+		JMP		CONT2
+CONT3:	CALL	BDOS
+		MVI		E, 0
+		SUI		100
+		JC		CONT4
+		INR		E
+		JMP		CONT3
+CONT4:	CALL	BDOS
+		MVI		E, 0
+		SUI		10
+		JC		CONT5
+		INR		E
+		JMP		CONT4
+CONT5:	CALL	BDOS
+		MVI		E, 0
+		SUI		1
+		JC		DONE
+		INR		E
+		JMP		CONT5
+DONE:	CALL	BDOS
+		MVI		E, LF
+		CALL	BDOS
+		MVI		E, CR
+		CALL	BDOS
+		RET
 
 MSG1:		DB		'The Tiny Calculator$'
 MSG2:		DB		LF, CR, 'Enter a problem: $'
