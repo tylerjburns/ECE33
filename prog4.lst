@@ -1,0 +1,271 @@
+
+asm85,  version 1.0f
+(c) 2010, M. D. Wagh
+
+                    ;Tyler Burns
+                    ;ECE 33
+                    ;Program 4
+                    ;12/4/15
+                    ;This program adds and subtracts 16 bit numbers
+                    
+                    ;Hey Ian, Wagh can shed more light on this
+                    ;but on Wednesday I emailed him and got an extension
+                    ;because when I assembled my work, it deleted the file.
+                    ;He said that can happen in assembly.
+                    ;So that's why this program doesn't work. 
+                    ;I wrote it all tonight (Friday).
+                    ;Sorry I didn't have time to debug.
+                    ;-Tyler
+                    		ORG		100H
+0100   31E502       		LXI		SP, sp0
+                    BOOT	EQU		0
+                    BDOS	EQU		5
+                    CR		EQU		0DH
+                    LF		EQU		0AH
+                    PLUS		EQU		2BH
+                    MINUS	EQU		2DH
+0103   0E09         		MVI		C, 9
+0105   116D02       		LXI		D, MSG1
+0108   CD0500       		CALL	BDOS
+010B   118102       		LXI		D, MSG2
+010E   CD0500       		CALL	BDOS
+0111   CD2801       CALC:	CALL	READ1	;call for first read in
+0114   FE0D         		CPI		CR		;check if user is done
+0116   CA0000       		JZ		BOOT	;break out if so
+0119   CD9B01       		CALL	READ2	;call for second read in
+011C   FE0D         		CPI		CR		;check if user is done
+011E   CA0000       		JZ		BOOT	;break out if so
+0121   19           		DAD		D		;since negative numbers are made negative within the read routines
+                    						;and since both routines can handle negatives
+                    						;the results can just be added together
+0122   CD1202       		CALL	PRINT	;print final result
+0125   C31101       		JMP		CALC		;go again!!
+                    
+                    ;Name: READ1
+                    ;Input: None
+                    ;Function: receives the user's input, 
+                    ;gets rid of bad characters
+                    ;and makes negative numbers negative
+                    ;Destroyed Registers: 
+                    ;Subroutines Used: MULT
+0128   C5           READ1:	PUSH	B		;save B
+0129   1600         READY:	MVI		D, 0
+012B   0E01         		MVI		C, 1
+012D   CD0500       		CALL	BDOS	;receive input
+0130   FE0D         		CPI		CR		;check if enter
+0132   CA5F02       		JZ		DONE	;if so, break out
+0135   FE2D         		CPI		MINUS	;check if minus sign (implies negative)
+0137   CAC701       		JZ		READN	;if minus sign, go to negative reading section
+013A   FE2B         READP:	CPI		PLUS		;otherwise, continue
+013C   CA5F02       		JZ		DONE	;if it's a plus, then we're done taking number input
+013F   FE2B         		CPI		'+'		;check if it's a character below the range we want on screen
+0141   FAEB01       		JM		DELETE	;if it is, the result will be negative, therefore delete it
+0144   FE3A         		CPI		'9'+1	;check if the input is larger than what we want on screen
+0146   F2EB01       		JP		DELETE	; if it is, the result will be positive, so delete it
+0149   D630         		SUI		'0'		;if it passes all of these checks, then take it out of ascii
+014B   CD0902       		CALL	MULT	;multiply HL by 10
+014E   7D           		MOV		A, L		;add the new input to it
+014F   8F           		ADC		A
+0150   6F           		MOV		L, A		;store new number back in L
+0151   C33A01       		JMP		READP	;read in positive input again
+0154   0E01         READN:	MVI		C, 1		;receive input
+0156   CD0500       		CALL	BDOS
+0159   FE0D         		CPI		CR		;same as READP
+015B   CA5F02       		JZ		DONE
+015E   FE2B         		CPI		PLUS
+0160   CA5F02       		JZ		DONE
+0163   FE2B         		CPI		'+'
+0165   FAEB01       		JM		DELETE
+0168   FE3A         		CPI		'9'+1
+016A   F2EB01       		JP		DELETE
+016D   D630         		SUI		'0'
+016F   CD0902       		CALL	MULT
+0172   7D           		MOV		A, L
+0173   8F           		ADC		A
+0174   6F           		MOV		L, A
+0175   C35401       		JMP		READN
+0178   1E08         DELETE:	MVI		E, 08H
+017A   0E02         		MVI		C, 2
+017C   CD0500       		CALL	BDOS
+017F   1E20         		MVI		E, 20H
+0181   CD0500       		CALL	BDOS
+0184   1E08         		MVI		E, 08H
+0186   CD0500       		CALL	BDOS
+0189   C32901       		JMP		READY
+018C   3E00         DONEN:	MVI		A, 0		;if negative intention (signalled by minus sign)
+018E   95           		SUB		L		;set A to 0 and subtract L to get negative form
+018F   6F           		MOV		L, A		; move that to L
+0190   3E00         		MVI		A, 0		;set A to 0 again
+0192   9C           		SBB		H		;subtract H and borrow from A
+0193   67           		MOV		H, A		;move result to H
+0194   1600         		MVI		D, 0		;exchange HL and DE
+0196   1E00         		MVI		E, 0
+0198   EB           		XCHG
+0199   C1           DONE:	POP		B
+019A   C9           		RET
+                    
+                    ;Name: READ2
+                    ;Input: None
+                    ;Function: receives the user's input, 
+                    ;gets rid of bad characters
+                    ;and makes negative numbers negative
+                    ;Destroyed Registers: 
+                    ;Subroutines Used: MULT
+019B   C5           READ2:	PUSH	B		;same as above method, except
+019C   1600         READY:	MVI		D, 0
+019E   0E01         		MVI		C, 1
+01A0   CD0500       		CALL	BDOS
+01A3   FE0D         		CPI		CR
+01A5   CA9901       		JZ		DONE
+01A8   FE2D         		CPI		MINUS
+01AA   CA5401       		JZ		READN
+01AD   FE2B         READP:	CPI		PLUS
+01AF   CA9901       		JZ		DONE
+01B2   FE2B         		CPI		'+'
+01B4   FA7801       		JM		DELETE
+01B7   FE3A         		CPI		'9'+1
+01B9   F27801       		JP		DELETE
+01BC   D630         		SUI		'0'
+01BE   CD0902       		CALL	MULT
+01C1   7D           		MOV		A, L
+01C2   8F           		ADC		A
+01C3   6F           		MOV		L, A
+01C4   C3AD01       		JMP		READP
+01C7   0E01         READN:	MVI		C, 1
+01C9   CD0500       		CALL	BDOS
+01CC   FE0D         		CPI		CR
+01CE   CA9901       		JZ		DONE
+01D1   FE2B         		CPI		PLUS
+01D3   CA9901       		JZ		DONE
+01D6   FE2B         		CPI		'+'
+01D8   FA7801       		JM		DELETE
+01DB   FE3A         		CPI		'9'+1
+01DD   F27801       		JP		DELETE
+01E0   D630         		SUI		'0'
+01E2   CD0902       		CALL	MULT
+01E5   7D           		MOV		A, L
+01E6   8F           		ADC		A
+01E7   6F           		MOV		L, A
+01E8   C3C701       		JMP		READN
+01EB   1E08         DELETE:	MVI		E, 08H
+01ED   0E02         		MVI		C, 2
+01EF   CD0500       		CALL	BDOS
+01F2   1E20         		MVI		E, 20H
+01F4   CD0500       		CALL	BDOS
+01F7   1E08         		MVI		E, 08H
+01F9   CD0500       		CALL	BDOS
+01FC   C39C01       		JMP		READY
+01FF   3E00         DONEN:	MVI		A, 0
+0201   95           		SUB		L
+0202   6F           		MOV		L, A
+0203   3E00         		MVI		A, 0
+0205   9C           		SBB		H
+0206   67           		MOV		H, A		;don't exchange with DE
+0207   C1           DONE:	POP		B
+0208   C9           		RET
+                    
+                    ;Name: MULT
+                    ;Input: None
+                    ;Function: multiplies the current value in HL by 10
+                    ;Destroyed Registers: 
+                    ;Subroutines Used: 
+0209   D5           MULT:	PUSH	D		;saves D
+020A   29           		DAD		H		;2HL
+020B   54           		MOV		D, H		;move 2HL to DE
+020C   5D           		MOV		E, L
+020D   29           		DAD		H		;4HL
+020E   29           		DAD		H		;8HL
+020F   19           		DAD		D		;10HL
+0210   D1           		POP		D		;pop out D
+0211   C9           		RET
+                    
+                    ;Name: PRINT
+                    ;Input: None
+                    ;Function: prints result by decrementing
+                    ;each place in the potentially 5 digit number
+                    ;Destroyed Registers: 
+                    ;Subroutines Used: 
+0212   D5           PRINT:	PUSH	D		;save D
+0213   1E3D         		MVI		E, '='	;print equals sign
+0215   0E02         		MVI		C, 2
+0217   CD0500       		CALL	BDOS
+021A   1E00         		MVI		E, 0		;set E back to 0
+021C   7C           		MOV		A, H		;move higher bits into A
+021D   D60A         CONT:	SUI		10		;subtract ten thousands place
+021F   DA2602       		JC		CONT2	;on carry (implying too much subtraction), go to next place
+0222   1C           		INR		E		;otherwise, increment E
+0223   C31D02       		JMP		CONT	;loop this step until broken out of
+0226   CD0500       CONT2:	CALL	BDOS	;print E, e.g. ten thousands place
+0229   1E00         		MVI		E, 0		;reset E
+022B   D601         		SUI		1		;subtract thousands place
+022D   DA3402       		JC		CONT3	;same as above
+0230   1C           		INR		E
+0231   C32602       		JMP		CONT2
+0234   CD0500       CONT3:	CALL	BDOS	;print thousands place
+0237   7D           		MOV		A, L		;bring in lower bits
+0238   1E00         		MVI		E, 0
+023A   D664         		SUI		100		;subtract hundreds place
+023C   DA4302       		JC		CONT4
+023F   1C           		INR		E
+0240   C33402       		JMP		CONT3
+0243   CD0500       CONT4:	CALL	BDOS	;print hundreds place
+0246   1E00         		MVI		E, 0
+0248   D60A         		SUI		10
+024A   DA5102       		JC		CONT5
+024D   1C           		INR		E
+024E   C34302       		JMP		CONT4
+0251   CD0500       CONT5:	CALL	BDOS	;print tens place
+0254   1E00         		MVI		E, 0
+0256   D601         		SUI		1
+0258   DA0702       		JC		DONE
+025B   1C           		INR		E
+025C   C35102       		JMP		CONT5
+025F   CD0500       DONE:	CALL	BDOS	;print ones place
+0262   1E0A         		MVI		E, LF		;go down a line
+0264   CD0500       		CALL	BDOS
+0267   1E0D         		MVI		E, CR
+0269   CD0500       		CALL	BDOS
+026C   C9           		RET				;return to main routine
+                    
+026D   54686520     MSG1:		DB		'The Tiny Calculator$'
+       54696E79  
+       2043616C  
+       63756C61  
+       746F7224  
+0281   0A0D456E     MSG2:		DB		LF, CR, 'Enter a problem: $'
+       74657220  
+       61207072  
+       6F626C65  
+       6D3A2024  
+                    			DS		80
+                    sp0			EQU		$
+                    END
+
+      Symbol Table
+bdos         0005 (5)
+boot         0000 (0)
+calc         0111 (273)
+cont         021D (541)
+cont2        0226 (550)
+cont3        0234 (564)
+cont4        0243 (579)
+cont5        0251 (593)
+cr           000D (13)
+delete       01EB (491)
+done         025F (607)
+donen        01FF (511)
+lf           000A (10)
+minus        002D (45)
+msg1         026D (621)
+msg2         0281 (641)
+mult         0209 (521)
+plus         002B (43)
+print        0212 (530)
+read1        0128 (296)
+read2        019B (411)
+readn        01C7 (455)
+readp        01AD (429)
+ready        019C (412)
+sp0          02E5 (741)
+
+The file prog4.asm has no syntax errors
