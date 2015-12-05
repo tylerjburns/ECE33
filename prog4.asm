@@ -14,6 +14,8 @@ MINUS	EQU		2DH
 		MVI		C, 9
 		LXI		D, MSG1
 		CALL	BDOS
+		LXI		D, MSG2
+		CALL	BDOS
 CALC:	CALL	READ1
 		CPI		CR
 		JZ		BOOT
@@ -40,7 +42,9 @@ READP:	CPI		PLUS
 		JP		DELETE
 		SUI		'0'
 		CALL	MULT
-		DAD		A
+		MOV		A, L
+		ADC		A
+		MOV		L, A
 		JMP		READP
 READN:	MVI		C, 1
 		CALL	BDOS
@@ -54,7 +58,9 @@ READN:	MVI		C, 1
 		JP		DELETE
 		SUI		'0'
 		CALL	MULT
-		DAD		A
+		MOV		A, L
+		ADC		A
+		MOV		L, A
 		JMP		READY
 DELETE:	MVI		E, 08H
 		MVI		C, 2
@@ -92,7 +98,9 @@ READP:	CPI		PLUS
 		JP		DELETE
 		SUI		'0'
 		CALL	MULT
-		DAD		A
+		MOV		A, L
+		ADC		A
+		MOV		L, A
 		JMP		READP
 READN:	MVI		C, 1
 		CALL	BDOS
@@ -106,7 +114,9 @@ READN:	MVI		C, 1
 		JP		DELETE
 		SUI		'0'
 		CALL	MULT
-		DAD		A
+		MOV		A, L
+		ADC		A
+		MOV		L, A
 		JMP		READY
 DELETE:	MVI		E, 08H
 		MVI		C, 2
@@ -141,17 +151,18 @@ PRINT:	PUSH	D
 		CALL	BDOS
 		MVI		E, 0
 		MOV		A, H
-CONT:	SUI		10000
+CONT:	SUI		10
 		JC		CONT2
 		INR		E
 		JMP		CONT
 CONT2:	CALL	BDOS
 		MVI		E, 0
-		SUI		1000
+		SUI		1
 		JC		CONT3
 		INR		E
 		JMP		CONT2
 CONT3:	CALL	BDOS
+		MOV		A, L
 		MVI		E, 0
 		SUI		100
 		JC		CONT4
@@ -178,7 +189,6 @@ DONE:	CALL	BDOS
 
 MSG1:		DB		'The Tiny Calculator$'
 MSG2:		DB		LF, CR, 'Enter a problem: $'
-MSG3:		DB		LF, CR, '$'
 			DS		80
 sp0			EQU		$
 END
